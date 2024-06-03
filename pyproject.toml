@@ -27,7 +27,7 @@ Pillow = "^10.3.0"
 pyinstaller = "^6.6.0"
 
 [tool.poetry-pyinstaller-plugin.scripts]
-frame-comparison-tool = { source = "frame_comparison_tool/main.py", type = "onefile", bundle = true }
+frame-comparison-tool = { source = "frame_comparison_tool/__main__.py", type = "onefile", bundle = true }
 
 [build-system]
 requires = ["poetry-core"]

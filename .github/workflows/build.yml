@@ -1,0 +1,70 @@
+name: Build and Test
+
+on: [ push, pull_request ]
+
+jobs:
+#  test:
+#    strategy:
+#      matrix:
+#        os: [ubuntu-latest, windows-latest]
+#    runs-on: ${{ matrix.os }}
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Set up Python
+#        uses: actions/setup-python@v5
+#        with:
+#          python-version: '3.12'
+#
+#      - name: Install Poetry
+#        run: |
+#          curl -sSL https://install.python-poetry.org | python3 -
+#
+#      - name: Configure Poetry
+#        run: |
+#          echo "$HOME/.local/bin" >> $GITHUB_PATH
+#          poetry config virtualenvs.create false
+#
+#      - name: Install dependencies
+#        run: poetry install --with dev
+#
+#      - name: Run tests
+#        run: poetry run pytest
+
+  build:
+#    needs: test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.3.2
+
+      - name: Install PyInstaller plugin for Poetry
+        run: poetry self add poetry-pyinstaller-plugin==1.1.10
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Build all distributions
+        run: poetry build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.os }}
+          path: dist/*.whl
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyinstaller-binary-${{ matrix.os }}
+          path: dist/pyinstaller/*

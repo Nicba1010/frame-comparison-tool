@@ -14,6 +14,8 @@ import numpy as np
 from PIL import Image, ImageTk
 from loguru import logger
 
+from frame_comparison_tool.components import create_spinbox_frame, create_spinbox_ui
+
 
 # noinspection PyPep8Naming
 @contextmanager
@@ -400,9 +402,14 @@ def main():
 
     parameter_frame: tk.Frame = tk.Frame(app)
     parameter_frame.grid(row=1, column=0, sticky='ew')
+    # Make sources frame expand and fill all available space
+    parameter_frame.grid_columnconfigure(0, weight=1)
+
+    sources_frame = tk.Frame(parameter_frame)
+    sources_frame.grid(row=0, column=0, sticky='ew')
 
     for source_index in range(num_sources):
-        frame: tk.Frame = tk.Frame(parameter_frame)
+        frame: tk.Frame = tk.Frame(sources_frame)
         frame.pack(fill=tk.X, expand=True, pady=2)
 
         tk.Label(frame, text=f"Source {source_index + 1}:").pack(side=tk.LEFT, fill=tk.Y)
@@ -418,33 +425,7 @@ def main():
 
     # Adding the Comparison Count and Seed field
     comparison_and_seed_frame = tk.Frame(parameter_frame)
-    comparison_and_seed_frame.pack(fill=tk.X, expand=True, pady=2)
-
-    def create_spinbox_frame(
-            parent: tk.Widget,
-            label_text: str,
-            from_: int,
-            to: int,
-            increment: int,
-            default: int,
-            command: Callable[[tk.Spinbox], None]
-    ) -> tk.Frame:
-        frame = tk.Frame(parent)
-        frame.pack(pady=2)
-        tk.Label(frame, text=label_text).pack(side=tk.LEFT, fill=tk.Y)
-        spinbox = tk.Spinbox(
-            frame,
-            from_=from_,
-            to=to,
-            increment=increment,
-            wrap=True,
-            width=5
-        )
-        spinbox.config(command=partial(command, spinbox))
-        spinbox.delete(0, tk.END)
-        spinbox.insert(0, str(default))
-        spinbox.pack(side=tk.RIGHT)
-        return frame
+    comparison_and_seed_frame.grid(row=1, column=0, sticky='ew')
 
     sample_count_spinbox_frame: tk.Frame = create_spinbox_frame(
         comparison_and_seed_frame,
@@ -467,6 +448,20 @@ def main():
         lambda spinbox: comparison.set_seed(int(spinbox.get()))
     )
     seed_spinbox_frame.pack(side=tk.RIGHT)
+
+    create_spinbox_ui(
+        parent=parameter_frame,
+        text="Crop",
+        callback=lambda top, bottom, left, right: logger.debug(
+            f"Top: {top}, Bottom: {bottom}, Left: {left}, Right: {right}"),
+    ).grid(row=0, column=1, rowspan=2, sticky='ew')
+
+    create_spinbox_ui(
+        parent=parameter_frame,
+        text="Scale",
+        callback=lambda top, bottom, left, right: logger.debug(
+            f"Top: {top}, Bottom: {bottom}, Left: {left}, Right: {right}"),
+    ).grid(row=0, column=2, rowspan=2, sticky='ew')
 
     app.bind("<Left>", lambda event: comparison.prev_source())
     app.bind("<Right>", lambda event: comparison.next_source())
@@ -493,6 +488,10 @@ def main():
                 comparison.current_displayed_sample_frame_number
             ) - 1
         )
+    )
+    app.bind(
+        "<Control-Left>",
+        lambda event: comparison.save_frames()
     )
 
     def maximize_if_too_big(event):
@@ -537,7 +536,6 @@ def main():
     app.bind('<Configure>', lambda event: handle_configure(event))
 
     app.mainloop()
-
 
 
 if __name__ == "__main__":
